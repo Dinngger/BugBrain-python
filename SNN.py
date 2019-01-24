@@ -1,7 +1,7 @@
 #!usr/bin/python
 import math
-import time
 types = {'Step': 0, 'Linear': 1, 'Sigmoid': 2}
+t = 0
 
 
 def sigmoid(x):
@@ -9,65 +9,61 @@ def sigmoid(x):
 
 
 class Synapse:
-    weight = 1.0
-    decay = 1
-    learn = False
-    active = False
-    value = 0.0
-
     def __init__(self, neu):
         self.neu = neu
-        self.last = 0.0
+        self.weight = 1
+        self.decay = 1
+        self.learn = False
+        self.active = False
+        self.last = 0
+        self.__time = 0
 
-    def count(self):
+    def value(self):
+        update = self.__time != t
+        self.__time = t
         val_w = self.neu.value * self.weight
         if self.decay == 0:
-            self.value = val_w
+            return val_w
         else:
             if self.active:
-                self.last = self.last * self.decay
+                if update:
+                    self.last = self.last * self.decay
                 if math.fabs(self.last) <= 0.01:
                     self.active = False
                     self.last = 0
-                if math.fabs(self.last) > math.fabs(val_w):
+                if math.fabs(self.last) > math.fabs(val_w) and update:
                     self.last = val_w
-                self.value = self.last
+                return self.last
             else:
                 if val_w != 0:
                     self.active = True
                     self.last = val_w
-                    self.value = self.last
+                    return self.last
                 else:
-                    self.value = 0
-        return self.value
+                    return 0
 
 
 class Neuron:
-    threshold = 0.5
-    synapses = set()
-    learn = False
-    value = 0
-    new_value = 0
-
     def __init__(self, the_type):
         self.__type = types[the_type]
+        self.threshold = 0.5
+        self.synapses = set()
+        self.learn = False
+        self.value = 0
 
     def count(self):
-        _sum = 0
+        s_sum = 0
         for s in self.synapses:
-            _sum += s.count()
+            s_sum += s.value()
         if self.__type == types['Step']:
-            if _sum >= self.threshold:
-                self.new_value = 1
+            if s_sum >= self.threshold:
+                self.value = 1
             else:
-                self.new_value = 0
+                self.value = 0
         elif self.__type == types['Linear']:
-            self.new_value = _sum
+            self.value = s_sum
         else:
-            self.new_value = sigmoid(_sum)
-
-    def ok(self):
-        self.value = self.new_value
+            self.value = sigmoid(s_sum)
 
 
 a = Neuron('Step')
@@ -78,14 +74,13 @@ a2b = Synapse(a)
 b2a = Synapse(b)
 a2b.weight = -1
 b2a.weight = -1
-a2b.decay = 0.5
-b2a.decay = 0.5
+a2b.decay = 0.2
+b2a.decay = 0.2
 a.synapses.add(b2a)
 b.synapses.add(a2b)
-for i in range(10):
+for i in range(20):
+    t += 1
     a.count()
     b.count()
-    a.ok()
-    b.ok()
-    print("a: {}  b: {}  a2b: {}  b2a: {}".format(a.value, b.value, a2b.value, b2a.value))
-    # time.sleep(0.5)
+    a.count()
+    print("a: {}  b: {}".format(a.value, b.value))
