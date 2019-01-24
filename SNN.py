@@ -43,6 +43,11 @@ class Synapse:
                     return 0
 
 
+class InputNode:
+    def __init__(self):
+        self.value = 0
+
+
 class Neuron:
     def __init__(self, the_type):
         self.__type = types[the_type]
@@ -66,21 +71,49 @@ class Neuron:
             self.value = sigmoid(s_sum)
 
 
-a = Neuron('Step')
-b = Neuron('Step')
-a.threshold = 0
-b.threshold = 0
-a2b = Synapse(a)
-b2a = Synapse(b)
-a2b.weight = -1
-b2a.weight = -1
-a2b.decay = 0.2
-b2a.decay = 0.2
-a.synapses.add(b2a)
-b.synapses.add(a2b)
-for i in range(20):
-    t += 1
-    a.count()
-    b.count()
-    a.count()
-    print("a: {}  b: {}".format(a.value, b.value))
+# threshold and weight should be in [-1, 1]
+# decay should be in [0, 1]
+# the larger decay is, the faster the decay are.
+
+def test1():
+    global t
+    a = Neuron('Step')
+    b = Neuron('Step')
+    a.threshold = 0
+    b.threshold = 0
+    a2b = Synapse(a)
+    b2a = Synapse(b)
+    a2b.weight = -1
+    b2a.weight = -1
+    a2b.decay = 0.2
+    b2a.decay = 0.2
+    a.synapses.add(b2a)
+    b.synapses.add(a2b)
+    for i in range(20):
+        t += 1
+        a.count()
+        b.count()
+        a.count()
+        print("a: {}  b: {}".format(a.value, b.value))
+
+
+def test2():
+    global t
+    i = InputNode()
+    a = Neuron('Step')
+    i2a = Synapse(i)
+    a.synapses.add(i2a)
+    a2a = Synapse(a)
+    a2a.decay = 0.9
+    a.synapses.add(a2a)
+    for _ in range(20):
+        t += 1
+        if _ == 5:
+            i.value = 1
+        if _ == 7:
+            i.value = 0
+        a.count()
+        print("i: {}  a: {}".format(i.value, a.value))
+
+
+test2()
