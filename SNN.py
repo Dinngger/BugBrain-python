@@ -15,6 +15,7 @@ class Synapse:
         self.decay = 1
         self.learn = False
         self.active = False
+        self.decayed = False
         self.last = 0
         self.__time = 0
 
@@ -28,19 +29,25 @@ class Synapse:
             if self.active:
                 if update:
                     self.last = self.last * self.decay
+                if math.fabs(self.last) > math.fabs(val_w):
+                    self.last = val_w
                 if math.fabs(self.last) <= 0.01:
                     self.active = False
+                    self.decayed = True
                     self.last = 0
-                if math.fabs(self.last) > math.fabs(val_w) and update:
-                    self.last = val_w
                 return self.last
             else:
                 if val_w != 0:
-                    self.active = True
+                    if not self.decayed:
+                        self.active = True
+                        self.last = val_w
+                        return self.last
+                    else:
+                        return self.last
+                else:
+                    self.decayed = False
                     self.last = val_w
                     return self.last
-                else:
-                    return 0
 
 
 class InputNode:
@@ -116,4 +123,32 @@ def test2():
         print("i: {}  a: {}".format(i.value, a.value))
 
 
-test2()
+def test3():
+    global t
+    a = Neuron('Step')
+    b = Neuron('Step')
+    i = InputNode()
+    i2a = Synapse(i)
+    a2a = Synapse(a)
+    a2b = Synapse(a)
+    a2bn = Synapse(a)
+    a2b.weight = 0.7
+    a2bn.weight = -1
+    a2a.decay = 0.9
+    a2bn.decay = 0.7
+    a.synapses.add(i2a)
+    a.synapses.add(a2a)
+    b.synapses.add(a2b)
+    b.synapses.add(a2bn)
+    for _ in range(20):
+        t += 1
+        if _ == 2:
+            i.value = 1
+        if _ == 4:
+            i.value = 0
+        a.count()
+        b.count()
+        print("i: {}  out: {}".format(i.value, b.value))
+
+
+test3()
